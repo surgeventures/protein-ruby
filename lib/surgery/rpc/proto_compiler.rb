@@ -35,7 +35,7 @@ class ProtoCompiler
 
         old_content = File.read(proto_file)
 
-        File.write(proto_file, "module #{namespace}\n#{old_content}\nend")
+        File.write(proto_file, "module #{namespace}\n#{old_content}\nend\n")
       end
     end
   end
