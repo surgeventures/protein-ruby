@@ -37,7 +37,7 @@ class Router
     end
 
     def services
-      @services || []
+      GetConst.map(@services || [])
     end
 
     def resolve_by_name(service_name)

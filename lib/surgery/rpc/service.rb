@@ -13,12 +13,12 @@ class Service
     def proto(proto_module = nil)
       @proto_module = proto_module
       @service_name ||= proto_module.to_s.split("::").last.underscore
-      @request_class ||= "#{proto_module}::Request".safe_constantize
-      @response_class ||= "#{proto_module}::Response".safe_constantize
+      @request_class ||= "#{proto_module}::Request"
+      @response_class ||= "#{proto_module}::Response"
     end
 
     def proto_module
-      @proto_module || raise(DefinitionError, "proto module is not defined")
+      GetConst.call(@proto_module)
     end
 
     def request(request_class)
@@ -26,7 +26,7 @@ class Service
     end
 
     def request_class
-      @request_class || raise(DefinitionError, "request class is not defined")
+      GetConst.call(@request_class)
     end
 
     def response(response_class)
@@ -34,7 +34,7 @@ class Service
     end
 
     def response_class
-      @response_class || raise(DefinitionError, "response class is not defined")
+      GetConst.call(@response_class)
     end
   end
 

@@ -12,7 +12,7 @@ class Processor
     end
 
     def router
-      @router || raise(DefinitionError, "router class is not defined")
+      GetConst.call(@router)
     end
 
     def transport(transport, opts = {})
@@ -20,7 +20,7 @@ class Processor
     end
 
     def transport_class
-      @transport_class || raise(DefinitionError, "transport class is not defined")
+      GetConst.call(@transport_class)
     end
 
     def call(service_name, request_buf)
