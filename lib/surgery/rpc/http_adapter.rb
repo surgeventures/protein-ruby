@@ -26,7 +26,7 @@ class HTTPAdapter
       request_params = decode_params(env)
       service_name = request_params["service_name"]
       request_buf_b64 = request_params["request_buf_b64"]
-      request_buf = Base64.decode64(request_buf_b64)
+      request_buf = Base64.strict_decode64(request_buf_b64)
 
       response_buf, errors = @processor_class.call(service_name, request_buf)
 
@@ -63,7 +63,7 @@ class HTTPAdapter
       end
 
       JSON.dump({
-        "response_buf_b64" => response_buf && Base64.encode64(response_buf).strip,
+        "response_buf_b64" => response_buf && Base64.strict_encode64(response_buf),
         "errors" => errors
       })
     end
@@ -127,7 +127,7 @@ class HTTPAdapter
     def build_request_body(service_name, request_buf)
       JSON.dump({
         "service_name" => service_name,
-        "request_buf_b64" => Base64.encode64(request_buf).strip
+        "request_buf_b64" => Base64.strict_encode64(request_buf)
       })
     end
 
@@ -152,7 +152,7 @@ class HTTPAdapter
     end
 
     def handle_success(response_buf_b64)
-      response_buf = Base64.decode64(response_buf_b64)
+      response_buf = Base64.strict_decode64(response_buf_b64)
 
       [response_buf, nil]
     end
