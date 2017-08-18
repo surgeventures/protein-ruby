@@ -36,7 +36,9 @@ class Client
       service_name = service_class.service_name
       request_class = service_class.request_class
       request_buf = request_class.encode(request)
-      response_buf, errors = transport_class.call(service_name, request_buf)
+      request_payload = Payload::Request.encode(service_name, request_buf)
+      response_payload = transport_class.call(request_payload)
+      response_buf, errors = Payload::Response.decode(response_payload)
       service_instance = service_class.new(request)
 
       if response_buf

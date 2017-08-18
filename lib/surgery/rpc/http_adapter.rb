@@ -13,23 +13,20 @@ class HTTPAdapter
     def call(env)
       check_secret(env)
 
-      start_time = Time.now
-      request_params = decode_params(env)
-      service_name = request_params["service_name"]
+      request_payload = env["rack.input"].read
+      service_name, request_buf = Payload::Request.decode(request_payload)
 
       Rails.logger.info "Processing RPC call: #{service_name}"
 
-      request_buf_b64 = request_params["request_buf_b64"]
-      request_buf = Base64.strict_decode64(request_buf_b64)
+      start_time = Time.now
       response_buf, errors = Processor.call(@router, service_name, request_buf)
       duration_ms = ((Time.now - start_time) * 1000).round
 
       Rails.logger.info "#{response_buf ? 'Resolved' : 'Rejected'} in #{duration_ms}ms"
 
-      response_headers = build_response_headers
-      response_body = build_response_body(response_buf, errors)
+      response_payload = Payload::Response.encode(response_buf, errors)
 
-      ["200", response_headers, [response_body]]
+      ["200", {}, [response_payload]]
     end
 
     private
@@ -38,30 +35,6 @@ class HTTPAdapter
       return if @secret == env["HTTP_X_RPC_SECRET"]
 
       raise(TransportError, "invalid secret")
-    end
-
-    def decode_params(env)
-      request_body = env["rack.input"].read
-
-      JSON.parse(request_body)
-    end
-
-    def build_response_headers
-      { "Content-Type" => "application/json" }
-    end
-
-    def build_response_body(response_buf, errors)
-      errors &&= errors.map do |error|
-        {
-          "reason" => error.reason.is_a?(Symbol) ? ":#{error.reason}" : error.reason,
-          "pointer" => error.pointer && error.pointer.dump
-        }
-      end
-
-      JSON.dump({
-        "response_buf_b64" => response_buf && Base64.strict_encode64(response_buf),
-        "errors" => errors
-      })
     end
   end
 
@@ -99,19 +72,8 @@ class HTTPAdapter
       @secret || raise(DefinitionError, "secret is not defined")
     end
 
-    def call(service_name, request_buf)
-      headers = build_headers
-      request_body = build_request_body(service_name, request_buf)
-      response_body = make_http_request(headers, request_body)
-      response = decode_response_body(response_body)
-
-      if response["response_buf_b64"]
-        handle_success(response["response_buf_b64"])
-      elsif response["errors"]
-        handle_failure(response["errors"])
-      else
-        raise(TransportError, "malformed response: #{response.inspect}")
-      end
+    def call(request_payload)
+      make_http_request(request_payload, build_headers())
     end
 
     private
@@ -120,14 +82,7 @@ class HTTPAdapter
       { "X-RPC-Secret" => secret }
     end
 
-    def build_request_body(service_name, request_buf)
-      JSON.dump({
-        "service_name" => service_name,
-        "request_buf_b64" => Base64.strict_encode64(request_buf)
-      })
-    end
-
-    def make_http_request(headers, body)
+    def make_http_request(body, headers)
       uri = URI.parse(url)
       http = Net::HTTP.new(uri.host, uri.port)
       http_request = Net::HTTP::Post.new(uri.path, headers)
@@ -141,31 +96,6 @@ class HTTPAdapter
       http_response.body
     rescue SystemCallError => e
       raise(TransportError, e.to_s)
-    end
-
-    def decode_response_body(response_body)
-      JSON.parse(response_body)
-    end
-
-    def handle_success(response_buf_b64)
-      response_buf = Base64.strict_decode64(response_buf_b64)
-
-      [response_buf, nil]
-    end
-
-    def handle_failure(errors)
-      errors = errors.map do |error_from_json|
-        reason_string = error_from_json["reason"]
-        reason = reason_string =~ /^\:/ ? reason_string[1..-1].to_sym : reason_string
-        pointer = error_from_json["pointer"]
-
-        ServiceError.new(
-          reason: reason,
-          pointer: pointer && Pointer.new(nil, "request").load(pointer)
-        )
-      end
-
-      [nil, errors]
     end
   end
 end
