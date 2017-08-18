@@ -5,30 +5,26 @@ module Surgery
 module RPC
 class HTTPAdapter
   class Middleware
-    class << self
-      def mount(router, processor_class)
-        transport_class = processor_class.transport_class
-        path = transport_class.path
-        middleware = new(processor_class)
-
-        router.post(path => Proc.new { |env| middleware.call(env) })
-      end
-    end
-
-    def initialize(processor_class)
-      @processor_class = processor_class
-      @transport_class = processor_class.transport_class
+    def initialize(router, secret)
+      @router = router
+      @secret = secret
     end
 
     def call(env)
       check_secret(env)
 
+      start_time = Time.now
       request_params = decode_params(env)
       service_name = request_params["service_name"]
+
+      Rails.logger.info "Processing RPC call: #{service_name}"
+
       request_buf_b64 = request_params["request_buf_b64"]
       request_buf = Base64.strict_decode64(request_buf_b64)
+      response_buf, errors = Processor.call(@router, service_name, request_buf)
+      duration_ms = ((Time.now - start_time) * 1000).round
 
-      response_buf, errors = @processor_class.call(service_name, request_buf)
+      Rails.logger.info "#{response_buf ? 'Resolved' : 'Rejected'} in #{duration_ms}ms"
 
       response_headers = build_response_headers
       response_body = build_response_body(response_buf, errors)
@@ -39,7 +35,7 @@ class HTTPAdapter
     private
 
     def check_secret(env)
-      return if @transport_class.secret == env["HTTP_X_RPC_SECRET"]
+      return if @secret == env["HTTP_X_RPC_SECRET"]
 
       raise(TransportError, "invalid secret")
     end
