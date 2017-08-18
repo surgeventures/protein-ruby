@@ -3,7 +3,7 @@ module RPC
 class Router
   class << self
     def define(router)
-      if router.is_a?(Class)
+      if router.is_a?(Class) || router.is_a?(String)
         router
       elsif router.is_a?(Hash)
         router_class = Class.new(Router)

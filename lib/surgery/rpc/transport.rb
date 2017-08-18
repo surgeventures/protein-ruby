@@ -3,7 +3,7 @@ module RPC
 class Transport
   class << self
     def define(transport, opts = {})
-      if transport.is_a?(Class)
+      if transport.is_a?(Class) || transport.is_a?(String)
         transport_class
       elsif transport.is_a?(Symbol)
         transport_base_class =
