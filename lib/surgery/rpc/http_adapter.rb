@@ -4,6 +4,8 @@ require "json"
 module Surgery
 module RPC
 class HTTPAdapter
+  HTTPS_SCHEME = "https".freeze
+
   class Middleware
     def initialize(router, secret)
       @router = router
@@ -85,6 +87,7 @@ class HTTPAdapter
     def make_http_request(body, headers)
       uri = URI.parse(url)
       http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == HTTPS_SCHEME
       http_request = Net::HTTP::Post.new(uri.path, headers)
       http_request.body = body
       http_response = http.request(http_request)
