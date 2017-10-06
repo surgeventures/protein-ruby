@@ -16,17 +16,7 @@ class HTTPAdapter
       check_secret(env)
 
       request_payload = env["rack.input"].read
-      service_name, request_buf = Payload::Request.decode(request_payload)
-
-      Rails.logger.info "Processing RPC call: #{service_name}"
-
-      start_time = Time.now
-      response_buf, errors = Processor.call(@router, service_name, request_buf)
-      duration_ms = ((Time.now - start_time) * 1000).round
-
-      Rails.logger.info "#{response_buf ? 'Resolved' : 'Rejected'} in #{duration_ms}ms"
-
-      response_payload = Payload::Response.encode(response_buf, errors)
+      response_payload = Processor.call(@router, request_payload)
 
       ["200", {}, [response_payload]]
     end

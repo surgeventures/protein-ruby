@@ -10,6 +10,8 @@ class Transport
           case transport
           when :http
             Surgery::RPC::HTTPAdapter
+          when :amqp
+            Surgery::RPC::AMQPAdapter
           else
             raise(DefinitionError, "invalid transport: #{transport.inspect}")
           end
