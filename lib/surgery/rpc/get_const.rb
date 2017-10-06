@@ -5,7 +5,7 @@ class GetConst
     def call(input)
       if input.is_a?(String)
         input.constantize
-      elsif input
+      elsif input != nil
         input
       else
         raise DefinitionError, "unset required option"

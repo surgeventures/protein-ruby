@@ -63,6 +63,13 @@ class AMQPAdapter
       end
     end
 
+    def push(message_payload)
+      prepare_client
+
+      @x.publish(message_payload,
+        routing_key: @server_queue)
+    end
+
     def serve(router)
       Rails.logger.info "Connecting to #{url.inspect}"
 
@@ -88,9 +95,11 @@ class AMQPAdapter
           response = "service_error"
         end
 
-        @x.publish(response,
-          routing_key: properties.reply_to,
-          correlation_id: properties.correlation_id)
+        if response
+          @x.publish(response,
+            routing_key: properties.reply_to,
+            correlation_id: properties.correlation_id)
+        end
 
         raise(@error) if @error
       end

@@ -29,6 +29,10 @@ class Service
       GetConst.call(@request_class)
     end
 
+    def response?
+      response_class != false
+    end
+
     def response(response_class)
       @response_class = response_class
     end
@@ -39,6 +43,7 @@ class Service
   end
 
   attr_reader :request, :response, :errors
+  delegate :response?, :response_class, to: :class
 
   def initialize(request)
     @request = request
@@ -46,29 +51,31 @@ class Service
 
   def process
     @success = nil
-    @response = self.class.response_class.new
+    @response = response_class.new if response?
     @errors = []
 
     call
 
-    raise(ProcessingError, "resolve/reject must be called") if @success.nil?
+    raise(ProcessingError, "resolve/reject must be called") if response? && @success.nil?
   end
 
   def resolve(response = nil)
+    raise(ProcessingError, "can't resolve non-responding service") unless response?
     raise(ProcessingError, "unable to resolve with previous errors") if @errors && @errors.any?
 
     @success = true
     @response =
       if !response
         @response
-      elsif response.is_a?(self.class.response_class)
+      elsif response.is_a?(response_class)
         response
       else
-        self.class.response_class.new(response)
+        response_class.new(response)
       end
   end
 
   def reject(*args)
+    raise(ProcessingError, "can't reject non-responding service") unless response?
     if args.any? && @errors && @errors.any?
       raise(ProcessingError, "unable to reject with both rejection value and previous errors")
     end

@@ -33,10 +33,14 @@ class Client
 
     def call(request)
       service_class = router.resolve_by_request(request)
+
+      raise(ArgumentError, "can't call to non-responding service") unless service_class.response?
+
       service_name = service_class.service_name
       request_class = service_class.request_class
       request_buf = request_class.encode(request)
       request_payload = Payload::Request.encode(service_name, request_buf)
+
       response_payload = transport_class.call(request_payload)
       response_buf, errors = Payload::Response.decode(response_payload)
       service_instance = service_class.new(request)
@@ -58,6 +62,21 @@ class Client
       end
 
       service_instance.response
+    end
+
+    def push(request)
+      service_class = router.resolve_by_request(request)
+
+      raise(ArgumentError, "can't push to responding service") if service_class.response?
+
+      service_name = service_class.service_name
+      request_class = service_class.request_class
+      request_buf = request_class.encode(request)
+      request_payload = Payload::Request.encode(service_name, request_buf)
+
+      transport_class.push(request_payload)
+
+      nil
     end
   end
 end
