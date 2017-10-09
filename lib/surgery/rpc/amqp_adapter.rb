@@ -14,8 +14,8 @@ class AMQPAdapter
         queue(new_queue)
       end
 
-      if (new_timeout = hash[:timeout])
-        timeout(new_timeout)
+      if hash.has_key?(:timeout)
+        timeout(hash[:timeout])
       end
     end
 
@@ -29,9 +29,9 @@ class AMQPAdapter
       @queue || raise(DefinitionError, "queue is not defined")
     end
 
-    def timeout(timeout = nil)
-      @timeout = timeout if timeout
-      @timeout || 15_000
+    def timeout(timeout = :not_set)
+      @timeout = timeout if timeout != :not_set
+      instance_variable_defined?("@timeout") ? @timeout : 15_000
     end
 
     attr_reader :reply_queue
@@ -43,20 +43,18 @@ class AMQPAdapter
 
       @call_id = SecureRandom.uuid
 
-      Rails.logger.debug "Sending request #{@call_id}"
-
       @x.publish(request_payload,
         correlation_id: @call_id,
         routing_key: @server_queue,
         reply_to: @reply_queue.name,
-        expiration: timeout == 0 ? nil : timeout)
+        expiration: timeout)
 
       self.response = nil
-      lock.synchronize { condition.wait(lock, timeout == 0 ? nil : timeout * 0.001) }
+      lock.synchronize { condition.wait(lock, timeout && timeout * 0.001) }
 
       if response == nil
         raise(TransportError, "timeout after #{timeout}ms")
-      elsif response == "service_error"
+      elsif response == "ESRV"
         raise(TransportError, "failed to process the request")
       else
         response
@@ -71,28 +69,21 @@ class AMQPAdapter
     end
 
     def serve(router)
-      Rails.logger.info "Connecting to #{url.inspect}"
-
       @conn = Bunny.new(url)
       @conn.start
       @ch = @conn.create_channel
-
-      Rails.logger.info "Preparing queue #{queue.inspect}"
-
       @q = @ch.queue(queue)
       @x = @ch.default_exchange
 
-      Rails.logger.info "Serving RPC calls"
+      Rails.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
 
       @q.subscribe(block: true) do |delivery_info, properties, payload|
-        Rails.logger.info "Processing request #{properties.correlation_id}"
-
         begin
           @error = nil
           response = Processor.call(router, payload)
-        rescue StandardError => error
+        rescue Exception => error
           @error = error
-          response = "service_error"
+          response = "ESRV"
         end
 
         if response
@@ -109,8 +100,6 @@ class AMQPAdapter
 
     def prepare_client
       return if @conn
-
-      Rails.logger.info "Connecting to #{url.inspect}"
 
       @conn = Bunny.new(url, automatically_recover: false)
       @conn.start

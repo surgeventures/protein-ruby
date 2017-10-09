@@ -30,7 +30,10 @@ class Service
     end
 
     def response?
-      response_class != false
+      response_class != false &&
+        (!response_class.is_a?(String) || !response_class.safe_constantize.nil?)
+    rescue NameError
+      false
     end
 
     def response(response_class)

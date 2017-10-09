@@ -34,7 +34,7 @@ class Client
     def call(request)
       service_class = router.resolve_by_request(request)
 
-      raise(ArgumentError, "can't call to non-responding service") unless service_class.response?
+      raise(ArgumentError, "called to non-responding service") unless service_class.response?
 
       service_name = service_class.service_name
       request_class = service_class.request_class
@@ -67,7 +67,7 @@ class Client
     def push(request)
       service_class = router.resolve_by_request(request)
 
-      raise(ArgumentError, "can't push to responding service") if service_class.response?
+      raise(ArgumentError, "pushed to responding service") if service_class.response?
 
       service_name = service_class.service_name
       request_class = service_class.request_class
