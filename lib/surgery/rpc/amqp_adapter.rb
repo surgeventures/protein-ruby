@@ -77,22 +77,31 @@ class AMQPAdapter
 
       Rails.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
 
-      @q.subscribe(block: true) do |delivery_info, properties, payload|
+      loop do
         begin
-          @error = nil
-          response = Processor.call(router, payload)
-        rescue Exception => error
-          @error = error
-          response = "ESRV"
-        end
+          @q.subscribe(block: true, manual_ack: true) do |delivery_info, properties, payload|
+            begin
+              @error = nil
+              response = Processor.call(router, payload)
+            rescue Exception => error
+              @error = error
+              response = "ESRV"
+            end
 
-        if response
-          @x.publish(response,
-            routing_key: properties.reply_to,
-            correlation_id: properties.correlation_id)
-        end
+            if response
+              @x.publish(response,
+                routing_key: properties.reply_to,
+                correlation_id: properties.correlation_id)
+            end
 
-        raise(@error) if @error
+            @ch.ack(delivery_info.delivery_tag)
+
+            raise(@error) if @error
+          end
+        rescue StandardError => e
+          Rails.logger.info "RPC server error: #{e.inspect}, restarting the server in 5s..."
+          sleep 5
+        end
       end
     end
 
@@ -101,7 +110,7 @@ class AMQPAdapter
     def prepare_client
       return if @conn
 
-      @conn = Bunny.new(url, automatically_recover: false)
+      @conn = Bunny.new(url)
       @conn.start
       @ch = @conn.create_channel
       @x = @ch.default_exchange
