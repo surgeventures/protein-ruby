@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class GetConst
   class << self
     def call(input)
@@ -16,6 +15,5 @@ class GetConst
       array.map { |input| call(input) }
     end
   end
-end
 end
 end

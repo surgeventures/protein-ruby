@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Transport
   class << self
     def define(transport, opts = {})
@@ -9,9 +8,9 @@ class Transport
         transport_base_class =
           case transport
           when :http
-            Surgery::RPC::HTTPAdapter
+            Protein::HTTPAdapter
           when :amqp
-            Surgery::RPC::AMQPAdapter
+            Protein::AMQPAdapter
           else
             raise(DefinitionError, "invalid transport: #{transport.inspect}")
           end
@@ -24,6 +23,5 @@ class Transport
       end
     end
   end
-end
 end
 end

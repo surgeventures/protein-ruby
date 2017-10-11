@@ -1,19 +1,18 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'surgery/version'
+require 'protein/version'
 
 Gem::Specification.new do |spec|
-  spec.name     = 'surgery'
-  spec.version  = Surgery::VERSION
+  spec.name     = 'protein'
+  spec.version  = Protein::VERSION
   spec.authors  = ['Karol Słuszniak']
   spec.email    = 'karol@shedul.com'
-  spec.homepage = 'http://github.com/surgeventures/surgery'
+  spec.homepage = 'http://github.com/surgeventures/protein-ruby'
   spec.license  = 'MIT'
   spec.platform = Gem::Platform::RUBY
 
-  spec.summary = 'All Things Ruby @ Surge Ventures Inc, the creators of Shedul.'
-
-  spec.description = "This is the official entry point and hub for all company-wide Ruby efforts at Surge Ventures."
+  spec.summary = 'Multi-platform remote procedure call (RPC) system based on Protocol Buffers'
+  spec.description = "Multi-platform remote procedure call (RPC) system based on Protocol Buffers"
 
   spec.files            = Dir["lib/**/*.rb"]
   spec.has_rdoc         = false

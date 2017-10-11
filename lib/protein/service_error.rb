@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class ServiceError
   attr_reader :reason
   attr_accessor :pointer
@@ -12,6 +11,5 @@ class ServiceError
       raise(ProcessingError, "error reason must be a string or symbol")
     end
   end
-end
 end
 end

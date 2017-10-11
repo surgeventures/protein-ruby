@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Client
   class << self
     def route(router)
@@ -79,6 +78,5 @@ class Client
       nil
     end
   end
-end
 end
 end

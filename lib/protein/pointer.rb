@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Pointer
   def initialize(base, base_name = "context", input = nil)
     @base = base
@@ -90,6 +89,5 @@ class Pointer
     @access_values = access_values if traverse_values
     @access_strings = access_strings
   end
-end
 end
 end

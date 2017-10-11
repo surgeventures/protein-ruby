@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Service
   class << self
     def service(service_name)
@@ -127,6 +126,5 @@ class Service
       ServiceError.new(reason: args[0][:reason], pointer: args[0][:pointer])
     end
   end
-end
 end
 end

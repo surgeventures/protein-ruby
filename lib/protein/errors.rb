@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
   class CallError < StandardError
     def initialize(errors)
       super(
@@ -14,5 +13,4 @@ module RPC
   class ProcessingError < StandardError; end
   class RoutingError < StandardError; end
   class TransportError < StandardError; end
-end
 end

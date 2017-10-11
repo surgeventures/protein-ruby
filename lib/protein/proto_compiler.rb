@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class ProtoCompiler
   class << self
     def call(proto_directory: "./lib", namespace: nil)
@@ -39,6 +38,5 @@ class ProtoCompiler
       end
     end
   end
-end
 end
 end

@@ -1,8 +1,7 @@
 require "bunny"
 require "thread"
 
-module Surgery
-module RPC
+module Protein
 class AMQPAdapter
   class << self
     def from_hash(hash)
@@ -129,6 +128,5 @@ class AMQPAdapter
       end
     end
   end
-end
 end
 end

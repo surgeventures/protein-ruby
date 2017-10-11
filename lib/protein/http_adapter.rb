@@ -1,8 +1,7 @@
 require "net/http"
 require "json"
 
-module Surgery
-module RPC
+module Protein
 class HTTPAdapter
   HTTPS_SCHEME = "https".freeze
 
@@ -91,6 +90,5 @@ class HTTPAdapter
       raise(TransportError, e.to_s)
     end
   end
-end
 end
 end

@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Router
   class << self
     def define(router)
@@ -52,6 +51,5 @@ class Router
       end || raise(RoutingError, "service for #{request.class} not found")
     end
   end
-end
 end
 end

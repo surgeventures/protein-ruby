@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Processor
   class << self
     def call(router, request_payload)
@@ -64,6 +63,5 @@ class Processor
       service_instance.process
     end
   end
-end
 end
 end

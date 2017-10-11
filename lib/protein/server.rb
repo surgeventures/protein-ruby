@@ -1,5 +1,4 @@
-module Surgery
-module RPC
+module Protein
 class Server
   class << self
     def route(router)
@@ -27,6 +26,5 @@ class Server
       transport_class.serve(router)
     end
   end
-end
 end
 end

@@ -1,8 +1,7 @@
 require "net/http"
 require "json"
 
-module Surgery
-module RPC
+module Protein
 module Payload
   class Request
     class << self
@@ -68,6 +67,5 @@ module Payload
       end
     end
   end
-end
 end
 end
