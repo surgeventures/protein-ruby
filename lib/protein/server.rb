@@ -1,3 +1,5 @@
+require 'parallel'
+
 module Protein
 class Server
   class << self
@@ -14,6 +16,11 @@ class Server
       GetConst.call(@router)
     end
 
+    def config(config = nil)
+      @config = (@config || {}).merge(config) if config
+      @config || {}
+    end
+
     def transport(transport, opts = {})
       @transport_class = Transport.define(transport, opts)
     end
@@ -23,7 +30,16 @@ class Server
     end
 
     def start
-      transport_class.serve(router)
+      worker_count = config.fetch(:concurrency, 5)
+
+      if worker_count.is_a?(Integer) && worker_count > 1
+        Parallel.each(1..worker_count, in_processes: worker_count) do |worker|
+          Rails.logger.info "Starting server #{worker}/#{worker_count} with PID #{Process.pid}"
+          transport_class.serve(router)
+        end
+      else
+        transport_class.serve(router)
+      end
     end
   end
 end

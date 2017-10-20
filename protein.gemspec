@@ -12,11 +12,12 @@ Gem::Specification.new do |spec|
   spec.platform = Gem::Platform::RUBY
 
   spec.summary = 'Multi-platform remote procedure call (RPC) system based on Protocol Buffers'
-  spec.description = "Multi-platform remote procedure call (RPC) system based on Protocol Buffers"
 
   spec.files            = Dir["lib/**/*.rb"]
   spec.has_rdoc         = false
   spec.extra_rdoc_files = ["README.md"]
   spec.test_files       = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths    = ["lib"]
+
+  spec.add_runtime_dependency 'parallel', '>= 1.0.0'
 end
