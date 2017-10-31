@@ -20,4 +20,5 @@ Gem::Specification.new do |spec|
   spec.require_paths    = ["lib"]
 
   spec.add_runtime_dependency 'parallel', '>= 1.0.0'
+  spec.add_runtime_dependency 'bunny', '>= 2.7.0'
 end
