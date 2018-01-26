@@ -45,10 +45,17 @@ class Service
   end
 
   attr_reader :request, :response, :errors
-  delegate :response?, :response_class, to: :class
 
   def initialize(request)
     @request = request
+  end
+
+  def response?
+    self.class.response?
+  end
+
+  def response_class
+    self.class.response_class
   end
 
   def process
