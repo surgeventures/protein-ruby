@@ -1,4 +1,5 @@
 require "bunny"
+require "securerandom"
 require "thread"
 
 module Protein
@@ -74,7 +75,7 @@ class AMQPAdapter
       @q = @ch.queue(queue)
       @x = @ch.default_exchange
 
-      Rails.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
+      Protein.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
 
       loop do
         begin
@@ -95,10 +96,16 @@ class AMQPAdapter
 
             @ch.ack(delivery_info.delivery_tag)
 
-            raise(@error) if @error
+            if @error
+              error_logger = Protein.config.error_logger
+              error_logger.call(@error) if error_logger
+
+              raise(@error)
+            end
           end
         rescue StandardError => e
-          Rails.logger.info "RPC server error: #{e.inspect}, restarting the server in 5s..."
+          Protein.logger.error "RPC server error: #{e.inspect}, restarting the server in 5s..."
+
           sleep 5
         end
       end

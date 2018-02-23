@@ -34,7 +34,7 @@ class Server
 
       if worker_count.is_a?(Integer) && worker_count > 1
         Parallel.each(1..worker_count, in_processes: worker_count) do |worker|
-          Rails.logger.info "Starting server #{worker}/#{worker_count} with PID #{Process.pid}"
+          Protein.logger.info "Starting server #{worker}/#{worker_count} with PID #{Process.pid}"
           transport_class.serve(router)
         end
       else

@@ -3,7 +3,7 @@ class GetConst
   class << self
     def call(input)
       if input.is_a?(String)
-        input.constantize
+        Object.const_get(input)
       elsif input != nil
         input
       else
