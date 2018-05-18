@@ -116,8 +116,7 @@ class AMQPAdapter
     def prepare_client
       return if @conn
 
-      @conn = Bunny.new(url)
-      @conn.start
+      connect_bunny
       @ch = @conn.create_channel
       @x = @ch.default_exchange
       @server_queue = queue
@@ -133,6 +132,14 @@ class AMQPAdapter
           that.lock.synchronize{that.condition.signal}
         end
       end
+    end
+
+    def connect_bunny
+      @conn = Bunny.new(url, recover_from_connection_close: false)
+      @conn.start
+    rescue Bunny::TCPConnectionFailedForAllHosts
+      @conn = nil
+      raise
     end
   end
 end
