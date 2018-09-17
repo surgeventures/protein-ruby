@@ -45,10 +45,11 @@ class Service
     end
   end
 
-  attr_reader :request, :response, :errors
+  attr_reader :request, :response, :errors, :response_metadata
 
   def initialize(request)
     @request = request
+    @response_metadata = Hash.new()
   end
 
   def response?
@@ -67,6 +68,10 @@ class Service
     call
 
     raise(ProcessingError, "resolve/reject must be called") if response? && @success.nil?
+  end
+
+  def set_response_metadata(response_metadata)
+    @response_metadata = response_metadata
   end
 
   def resolve(response = nil)
