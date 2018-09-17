@@ -1,3 +1,4 @@
+require "protein/logger"
 require "protein/errors"
 require "protein/proto_compiler"
 require "protein/get_const"
@@ -38,7 +39,7 @@ class << self
 
   def logger
     @logger ||= begin
-      Logger.new($stdout).tap do |log|
+      Protein::Logger.new($stdout).tap do |log|
         log.progname = 'protein'
       end
     end
