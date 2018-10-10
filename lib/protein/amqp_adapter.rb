@@ -139,11 +139,9 @@ class AMQPAdapter
         if call
           mutex = call[:mutex]
           condition = call[:condition]
+          call[:response] = payload
 
-          if mutex && condition
-            call[:response] = payload
-            mutex.synchronize { condition.signal }
-          end
+          mutex.synchronize { condition.signal }
         end
       end
     end
