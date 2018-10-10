@@ -72,6 +72,7 @@ class AMQPAdapter
       @conn = Bunny.new(url)
       @conn.start
       @ch = @conn.create_channel
+      @ch.prefetch(1)
       @q = @ch.queue(queue)
       @x = @ch.default_exchange
 
