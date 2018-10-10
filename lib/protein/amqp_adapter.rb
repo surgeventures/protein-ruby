@@ -130,6 +130,7 @@ class AMQPAdapter
       @x = @ch.default_exchange
       @server_queue = queue
       @reply_queue = @ch.queue("", exclusive: true)
+      @calls = Concurrent::Hash.new
 
       @reply_queue.subscribe do |delivery_info, properties, payload|
         call_id = properties[:correlation_id]
