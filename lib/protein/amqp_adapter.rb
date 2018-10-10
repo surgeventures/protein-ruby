@@ -55,7 +55,7 @@ class AMQPAdapter
       call[:condition] = condition
       calls[call_id] = call
 
-      lock.synchronize { condition.wait(lock, timeout && timeout * 0.001) }
+      mutex.synchronize { condition.wait(mutex, timeout && timeout * 0.001) }
 
       response = call[:response]
       calls.delete(call_id)
