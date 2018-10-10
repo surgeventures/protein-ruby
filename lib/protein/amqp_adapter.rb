@@ -35,22 +35,30 @@ class AMQPAdapter
     end
 
     attr_reader :reply_queue
-    attr_accessor :response, :call_id
-    attr_reader :lock, :condition
+    attr_accessor :calls
 
     def call(request_payload)
       prepare_client
 
-      @call_id = SecureRandom.uuid
+      call_id = SecureRandom.uuid
 
       @x.publish(request_payload,
-        correlation_id: @call_id,
+        correlation_id: call_id,
         routing_key: @server_queue,
         reply_to: @reply_queue.name,
         expiration: timeout)
 
-      self.response = nil
+      call = Concurrent::Hash.new
+      mutex = Mutex.new
+      condition = ConditionVariable.new
+      call[:mutex] = mutex
+      call[:condition] = condition
+      calls[call_id] = call
+
       lock.synchronize { condition.wait(lock, timeout && timeout * 0.001) }
+
+      response = call[:response]
+      calls.delete(call_id)
 
       if response == nil
         raise(TransportError, "timeout after #{timeout}ms")
@@ -122,15 +130,19 @@ class AMQPAdapter
       @x = @ch.default_exchange
       @server_queue = queue
       @reply_queue = @ch.queue("", exclusive: true)
-      @lock = Mutex.new
-      @condition = ConditionVariable.new
-
-      that = self
 
       @reply_queue.subscribe do |delivery_info, properties, payload|
-        if properties[:correlation_id] == that.call_id
-          that.response = payload
-          that.lock.synchronize{that.condition.signal}
+        call_id = properties[:correlation_id]
+        call = calls[call_id]
+
+        if call
+          mutex = call[:mutex]
+          condition = call[:condition]
+
+          if mutex && condition
+            call[:response] = payload
+            mutex.synchronize { condition.signal }
+          end
         end
       end
     end
