@@ -78,8 +78,15 @@ class AMQPAdapter
 
     def serve(router)
       @conn = Bunny.new(url)
-      @conn.start
+      begin
+        @conn.start
+      rescue Bunny::TCPConnectionFailed => e
+        Protein.logger.error "RPC server connection error: #{e.inspect}"
+        log_error(e)
+        raise(e)
+      end
       @ch = @conn.create_channel
+      @ch.prefetch(1)
       @q = @ch.queue(queue)
       @x = @ch.default_exchange
 
@@ -103,15 +110,13 @@ class AMQPAdapter
             end
 
             @ch.ack(delivery_info.delivery_tag)
-
             if @error
-              error_logger = Protein.config.error_logger
-              error_logger.call(@error) if error_logger
-
-              raise(@error)
+              log_error(@error)
+              raise(message)
             end
           end
         rescue StandardError => e
+          log_error(e)
           Protein.logger.error "RPC server error: #{e.inspect}, restarting the server in 5s..."
 
           sleep 5
@@ -120,6 +125,11 @@ class AMQPAdapter
     end
 
     private
+
+    def log_error(error)
+      @error_logger ||= Protein.config.error_logger
+      @error_logger.call(error) if @error_logger
+    end
 
     def prepare_client
       return if @conn
