@@ -11,7 +11,8 @@ class Service
 
     def proto(proto_module = nil)
       @proto_module = proto_module
-      @service_name ||= proto_module.to_s.split("::").last.underscore
+      @service_name ||= proto_module.to_s.split("::").last.
+        scan(/[A-Z][^A-Z]*/).map(&:downcase).join("_")
       @request_class ||= "#{proto_module}::Request"
       @response_class ||= "#{proto_module}::Response"
     end
@@ -30,7 +31,7 @@ class Service
 
     def response?
       response_class != false &&
-        (!response_class.is_a?(String) || !response_class.safe_constantize.nil?)
+        (!response_class.is_a?(String) || !(Object.const_get(response_class) rescue nil).nil?)
     rescue NameError
       false
     end
@@ -45,10 +46,17 @@ class Service
   end
 
   attr_reader :request, :response, :errors
-  delegate :response?, :response_class, to: :class
 
   def initialize(request)
     @request = request
+  end
+
+  def response?
+    self.class.response?
+  end
+
+  def response_class
+    self.class.response_class
   end
 
   def process

@@ -1,3 +1,5 @@
+require 'shellwords'
+
 module Protein
 class ProtoCompiler
   class << self
