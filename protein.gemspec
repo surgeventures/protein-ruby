@@ -19,8 +19,7 @@ Gem::Specification.new do |spec|
   spec.test_files       = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths    = ["lib"]
 
-  spec.add_development_dependency 'bunny', '~> 2.0', '>= 2.0.0'
-
-  spec.add_runtime_dependency 'google-protobuf', '~> 3.0', '>= 3.0.0'
-  spec.add_runtime_dependency 'parallel', '~> 1.0', '>= 1.0.0'
+  spec.add_runtime_dependency 'bunny', '~> 2.7'
+  spec.add_runtime_dependency 'google-protobuf', '~> 3.0'
+  spec.add_runtime_dependency 'parallel', '~> 1.0'
 end
