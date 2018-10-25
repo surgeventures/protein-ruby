@@ -1,3 +1,6 @@
+require 'date'
+require "securerandom"
+
 module Protein
 class Client
   class << self
@@ -38,10 +41,19 @@ class Client
       service_name = service_class.service_name
       request_class = service_class.request_class
       request_buf = request_class.encode(request)
-      request_payload = Payload::Request.encode(service_name, request_buf)
+      request_metadata = generate_request_metadata(service_name)
+      request_payload = Payload::Request.encode(service_name, request_buf, request_metadata)
 
+      Protein.logger.info "Calling RPC service: #{service_name}", request_metadata
+      request_sent_timestamp = DateTime.now.strftime("%Q").to_i
       response_payload = transport_class.call(request_payload)
-      response_buf, errors = Payload::Response.decode(response_payload)
+      response_arrival_timestamp = DateTime.now.strftime("%Q").to_i
+
+      response_buf, errors, response_metadata = Payload::Response.decode(response_payload)
+
+      response_metadata["response_arrival_timestamp"] = response_arrival_timestamp
+      Protein.logger.info "Received RPC response in #{response_arrival_timestamp - request_sent_timestamp}", response_metadata
+
       service_instance = service_class.new(request)
 
       if response_buf
@@ -71,11 +83,20 @@ class Client
       service_name = service_class.service_name
       request_class = service_class.request_class
       request_buf = request_class.encode(request)
-      request_payload = Payload::Request.encode(service_name, request_buf)
+      request_metadata = generate_request_metadata(service_name)
+      request_payload = Payload::Request.encode(service_name, request_buf, request_metadata)
 
       transport_class.push(request_payload)
 
       nil
+    end
+
+    def generate_request_metadata()
+      {
+        service_name: service_name,
+        request_id: SecureRandom.uuid,
+        request_timestamp: DateTime.now.strftime("%Q").to_i
+      }
     end
   end
 end
