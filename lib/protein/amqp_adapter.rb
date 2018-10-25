@@ -112,7 +112,7 @@ class AMQPAdapter
             @ch.ack(delivery_info.delivery_tag)
             if @error
               log_error(@error)
-              raise(message)
+              raise(@error)
             end
           end
         rescue StandardError => e
