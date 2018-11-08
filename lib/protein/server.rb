@@ -31,10 +31,12 @@ class Server
 
     def start
       worker_count = config.fetch(:concurrency, 5)
+      on_worker_boot = config[:on_worker_boot]
 
       if worker_count.is_a?(Integer) && worker_count > 1
         Parallel.each(1..worker_count, in_processes: worker_count) do |worker|
           Protein.logger.info "Starting server #{worker}/#{worker_count} with PID #{Process.pid}"
+          on_worker_boot.call if on_worker_boot.respond_to?(:call)
           transport_class.serve(router)
         end
       else
