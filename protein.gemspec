@@ -22,5 +22,4 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'bunny', '~> 2.7'
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0', '>= 1.0.5'
   spec.add_runtime_dependency 'google-protobuf', '~> 3.0'
-  spec.add_runtime_dependency 'parallel', '~> 1.0'
 end

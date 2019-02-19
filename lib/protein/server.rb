@@ -1,5 +1,3 @@
-require 'parallel'
-
 module Protein
 class Server
   class << self
@@ -29,19 +27,30 @@ class Server
       GetConst.call(@transport_class)
     end
 
+
     def start
       worker_count = config.fetch(:concurrency, 5)
       on_worker_boot = config[:on_worker_boot]
 
-      if worker_count.is_a?(Integer) && worker_count > 1
-        Parallel.each(1..worker_count, in_processes: worker_count) do |worker|
-          Protein.logger.info "Starting server #{worker}/#{worker_count} with PID #{Process.pid}"
+      pids = (1..worker_count).map do |i|
+        fork do
+          Protein.logger.info "Starting server #{i}/#{worker_count} with PID #{Process.pid}"
           on_worker_boot.call if on_worker_boot.respond_to?(:call)
           transport_class.serve(router)
         end
-      else
-        transport_class.serve(router)
       end
+
+      Signal.trap('TERM') do
+        pids.each { |pid| Process.kill(:TERM, pid) }
+        pids.each { |pid| Process.wait(pid) }
+      end
+
+      Signal.trap('INT') do
+        pids.each { |pid| Process.kill(:INT, pid) }
+        pids.each { |pid| Process.wait(pid) }
+      end
+
+      Process.wait
     end
   end
 end

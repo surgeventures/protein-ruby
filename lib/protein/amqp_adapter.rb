@@ -78,6 +78,8 @@ class AMQPAdapter
 
     def serve(router)
       @conn = Bunny.new(url)
+      @terminating = false
+      @processing = false
       begin
         @conn.start
       rescue Bunny::TCPConnectionFailed => e
@@ -90,11 +92,28 @@ class AMQPAdapter
       @q = @ch.queue(queue)
       @x = @ch.default_exchange
 
+      Signal.trap("TERM") do
+        if @processing
+          @terminating = true
+        else
+          exit
+        end
+      end
+
+      Signal.trap("INT") do
+        if @processing
+          @terminating = true
+        else
+          exit
+        end
+      end
+
       Protein.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
 
       loop do
         begin
           @q.subscribe(block: true, manual_ack: true) do |delivery_info, properties, payload|
+            @processing = true
             begin
               @error = nil
               response = Processor.call(router, payload)
@@ -110,12 +129,16 @@ class AMQPAdapter
             end
 
             @ch.ack(delivery_info.delivery_tag)
+            @processing = false
+            break if @terminating
             if @error
               log_error(@error)
               raise(@error)
             end
           end
         rescue StandardError => e
+          @processing = false
+          break if @terminating
           log_error(e)
           Protein.logger.error "RPC server error: #{e.inspect}, restarting the server in 5s..."
 
