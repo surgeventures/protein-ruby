@@ -24,6 +24,7 @@ class Client
 
     def transport(transport, opts = {})
       @transport_class = Transport.define(transport, opts)
+      @transport_class.init
     end
 
     def transport_class
