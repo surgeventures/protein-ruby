@@ -17,6 +17,7 @@ require "protein/http_adapter"
 require "protein/amqp_adapter"
 require "protein/transport"
 
+require "concurrent"
 require "google/protobuf"
 begin
   require "bunny"

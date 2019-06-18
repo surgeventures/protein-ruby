@@ -1,0 +1,10 @@
+version: 2
+jobs:
+  build:
+    machine:
+      image: circleci/classic:201808-01  # pins image to specific version using YYYY-MM format
+    steps:
+      - checkout
+      - run:
+        name: Run AMQP integration specs
+        command: docker-compose up --abort-on-container-exit protein-client
