@@ -67,6 +67,9 @@ class HTTPAdapter
       make_http_request(request_payload, build_headers())
     end
 
+    def init
+    end
+
     private
 
     def build_headers

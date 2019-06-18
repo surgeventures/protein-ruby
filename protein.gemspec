@@ -14,7 +14,6 @@ Gem::Specification.new do |spec|
   spec.summary = 'Multi-platform remote procedure call (RPC) system based on Protocol Buffers'
 
   spec.files            = Dir["lib/**/*.rb"]
-  spec.has_rdoc         = false
   spec.extra_rdoc_files = ["README.md"]
   spec.test_files       = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths    = ["lib"]
@@ -22,4 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'bunny', '~> 2.7'
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0', '>= 1.0.5'
   spec.add_runtime_dependency 'google-protobuf', '~> 3.0'
+
+  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'pry'
 end

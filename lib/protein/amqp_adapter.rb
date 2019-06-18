@@ -1,5 +1,10 @@
+begin
 require "bunny"
+rescue
+end
+
 require "securerandom"
+require "concurrent"
 require "thread"
 
 module Protein
@@ -160,7 +165,7 @@ class AMQPAdapter
 
     def prepare_client
       state = @connection_mutex.synchronize do
-        next :running if @conn
+        next :running if defined?(@conn)
 
         @conn = Bunny.new(url)
         @conn.start

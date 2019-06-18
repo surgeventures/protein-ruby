@@ -1,0 +1,25 @@
+version: '3'
+services:
+  amqp:
+    image: rabbitmq:3.6.10-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=bunnytime
+    ports:
+      - "5672:5672"
+  protein-server:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    depends_on: ["amqp"]
+    environment:
+      - AMQP_URL=amqp://rabbit:bunnytime@amqp
+    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "ruby", "spec/integration/test_server.rb"]
+  protein-client:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    depends_on: ["amqp", "protein-server"]
+    environment:
+      - AMQP_URL=amqp://rabbit:bunnytime@amqp
+    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "rspec", "spec/integration/"]
