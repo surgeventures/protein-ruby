@@ -1,3 +1,11 @@
+begin
+  require "bunny"
+rescue LoadError
+end
+
+require "concurrent"
+require "google/protobuf"
+
 require "protein/errors"
 require "protein/proto_compiler"
 require "protein/get_const"
@@ -16,13 +24,6 @@ require "protein/service"
 require "protein/http_adapter"
 require "protein/amqp_adapter"
 require "protein/transport"
-
-require "concurrent"
-require "google/protobuf"
-begin
-  require "bunny"
-rescue LoadError
-end
 
 module Protein
 class << self

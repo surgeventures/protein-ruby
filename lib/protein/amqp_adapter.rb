@@ -1,11 +1,4 @@
-begin
-require "bunny"
-rescue
-end
-
 require "securerandom"
-require "concurrent"
-require "thread"
 
 module Protein
 class AMQPAdapter
