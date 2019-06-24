@@ -14,7 +14,14 @@ services:
     depends_on: ["amqp"]
     environment:
       - AMQP_URL=amqp://rabbit:bunnytime@amqp
-    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "ruby", "spec/integration/amqp_test_server.rb"]
+    command:
+      - "./wait-for"
+      - "amqp:5672"
+      - "--"
+      - "bundle"
+      - "exec"
+      - "ruby"
+      - "spec/integration/amqp_test_server.rb"
   protein-server-http:
     build:
       context: ./
@@ -35,4 +42,14 @@ services:
       - AMQP_URL=amqp://rabbit:bunnytime@amqp
       - RPC_SECRET=x-rpc–secret
       - RPC_SERVER_URL=http://protein-server-http:80/rpc
-    command: ["./wait-for", "amqp:5672", "protein-server-http:80", "--", "bundle", "exec", "rspec", "spec/integration/integration_spec.rb"]
+    command:
+      - "./wait-for"
+      - "amqp:5672"
+      - "--"
+      - "./wait-for"
+      - "protein-server-http:80"
+      - "--"
+      - "bundle"
+      - "exec"
+      - "rspec"
+      - "spec/integration/integration_spec.rb"
