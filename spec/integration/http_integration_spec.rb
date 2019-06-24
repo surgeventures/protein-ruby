@@ -3,20 +3,20 @@ require_relative 'rpc_contract'
 
 module RPC
   class Client < Protein::Client
-    transport :amqp,
-      url: ENV['AMQP_URL'],
-      queue: "test_rpc"
+    transport :http,
+      url: ENV['RPC_SERVER_URL'],
+      secret: ENV['RPC_SECRET']
 
     route "RPC::Router"
   end
 end
 
-RSpec.describe "AMQP transport integration" do
+RSpec.describe "HTTP transport integration" do
   subject(:client) do
     RPC::Client
   end
 
-  it "successfully calls amqp server" do
+  it "works" do
     expect(
       client.call(
         RPC::TestCall::Request.new(counter: 123)

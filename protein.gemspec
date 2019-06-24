@@ -23,5 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'google-protobuf', '~> 3.0'
 
   spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'rack'
   spec.add_development_dependency 'pry'
 end

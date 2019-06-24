@@ -7,19 +7,37 @@ services:
       - RABBITMQ_DEFAULT_PASS=bunnytime
     ports:
       - "5672:5672"
-  protein-server:
+  protein-server-amqp:
     build:
       context: ./
       dockerfile: Dockerfile
     depends_on: ["amqp"]
     environment:
       - AMQP_URL=amqp://rabbit:bunnytime@amqp
-    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "ruby", "spec/integration/test_server.rb"]
-  protein-client:
+    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "ruby", "spec/integration/amqp_test_server.rb"]
+  protein-client-amqp:
     build:
       context: ./
       dockerfile: Dockerfile
-    depends_on: ["amqp", "protein-server"]
+    depends_on: ["amqp", "protein-server-amqp"]
     environment:
       - AMQP_URL=amqp://rabbit:bunnytime@amqp
-    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "rspec", "spec/integration/"]
+    command: ["./wait-for", "amqp:5672", "--", "bundle", "exec", "rspec", "spec/integration/amqp_integration_spec.rb"]
+  protein-server-http:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: ["bundle", "exec", "ruby", "spec/integration/http_test_server.rb"]
+    environment:
+      - RPC_SECRET=x-rpc–secret
+    expose:
+      - "80"
+  protein-client-http:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    depends_on: ["protein-server-http"]
+    environment:
+      - RPC_SECRET=x-rpc–secret
+      - RPC_SERVER_URL=http://protein-server-http:80/rpc
+    command: ["./wait-for", "protein-server-http:80", "--", "bundle", "exec", "rspec", "spec/integration/http_integration_spec.rb"]

@@ -10,5 +10,4 @@ COPY . ./
 
 RUN bundle install
 
-ENTRYPOINT ["/bin/bash"]
-CMD ["./wait-for", "amqp:5672", "--", "bundle", "exec", "rspec", "./spec"]
+CMD ["/bin/bash"]

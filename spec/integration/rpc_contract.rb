@@ -21,31 +21,11 @@ module RPC
     proto "RPC::TestCall"
 
     def call
-      resolve(incremented_counter: 0)
+      resolve(incremented_counter: request.counter + 1)
     end
   end
 
   class Router < Protein::Router
     service "RPC::TestService"
   end
-
-  class Server < Protein::Server
-    transport :amqp,
-      url: ENV['AMQP_URL'],
-      queue: "test_rpc"
-    
-    config(concurrency: 1, on_worker_boot: -> {})
-    
-    route "RPC::Router"
-  end
-  
-  class Client < Protein::Client
-    transport :amqp,
-      url: ENV['AMQP_URL'],
-      queue: "test_rpc"
-
-    route "RPC::Router"
-  end
 end
-
-RPC::Server.start
