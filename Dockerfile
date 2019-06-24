@@ -9,5 +9,3 @@ RUN curl -qO https://raw.githubusercontent.com/eficode/wait-for/f71f8199a0dd9595
 COPY . ./
 
 RUN bundle install
-
-CMD ["/bin/bash"]

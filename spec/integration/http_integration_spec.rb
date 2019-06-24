@@ -16,7 +16,7 @@ RSpec.describe "HTTP transport integration" do
     RPC::Client
   end
 
-  it "works" do
+  it "successfully calls http server" do
     expect(
       client.call(
         RPC::TestCall::Request.new(counter: 123)
