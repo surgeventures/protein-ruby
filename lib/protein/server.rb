@@ -21,12 +21,12 @@ class Server
 
     def transport(transport, opts = {})
       @transport_class = Transport.define(transport, opts)
+      @transport_class.init
     end
 
     def transport_class
       GetConst.call(@transport_class)
     end
-
 
     def start
       worker_count = config.fetch(:concurrency, 5)

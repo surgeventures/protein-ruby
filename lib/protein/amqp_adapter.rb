@@ -1,6 +1,4 @@
-require "bunny"
 require "securerandom"
-require "thread"
 
 module Protein
 class AMQPAdapter
@@ -32,6 +30,10 @@ class AMQPAdapter
     def timeout(timeout = :not_set)
       @timeout = timeout if timeout != :not_set
       instance_variable_defined?("@timeout") ? @timeout : 15_000
+    end
+
+    def init
+      @connection_mutex = Mutex.new
     end
 
     attr_reader :reply_queue
@@ -155,15 +157,21 @@ class AMQPAdapter
     end
 
     def prepare_client
-      return if @conn
+      state = @connection_mutex.synchronize do
+        next :running if defined?(@conn)
 
-      @conn = Bunny.new(url)
-      @conn.start
-      @ch = @conn.create_channel
-      @x = @ch.default_exchange
-      @server_queue = queue
-      @reply_queue = @ch.queue("", exclusive: true)
-      @calls = Concurrent::Hash.new
+        @conn = Bunny.new(url)
+        @conn.start
+        @ch = @conn.create_channel
+        @x = @ch.default_exchange
+        @server_queue = queue
+        @reply_queue = @ch.queue("", exclusive: true)
+        @calls = Concurrent::Hash.new
+
+        :initialized
+      end
+
+      return if state == :running
 
       @reply_queue.subscribe do |delivery_info, properties, payload|
         call_id = properties[:correlation_id]
