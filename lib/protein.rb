@@ -42,6 +42,7 @@ class << self
     @logger ||= begin
       Logger.new($stdout).tap do |log|
         log.progname = 'protein'
+        log.level = config.log_level || :info
       end
     end
   end
