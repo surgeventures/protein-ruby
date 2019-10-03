@@ -67,7 +67,7 @@ class Service
     begin
       call
     rescue Exception => ex
-      Protein.config.error_logger&.call "#{self.class} failed with exception: #{ex.inspect}"
+      Protein.config.error_logger&.call(ex)
       if response?
         add_error(ex.message)
         reject
