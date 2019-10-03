@@ -64,7 +64,15 @@ class Service
     @response = response_class.new if response?
     @errors = []
 
-    call
+    begin
+      call
+    rescue Exception => ex
+      Protein.config.error_logger&.call "#{self.class} failed with exception: #{ex.message}"
+      if response?
+        add_error(ex.message)
+        reject
+      end
+    end
 
     raise(ProcessingError, "resolve/reject must be called") if response? && @success.nil?
   end
