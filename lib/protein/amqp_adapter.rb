@@ -78,7 +78,8 @@ class AMQPAdapter
       prepare_client
 
       @x.publish message_payload,
-        routing_key: @server_queue
+        routing_key: @server_queue,
+        persistent: true
     end
 
     def serve(router)
@@ -96,7 +97,7 @@ class AMQPAdapter
 
       @ch = @conn.create_channel
       @ch.prefetch(1)
-      @q = @ch.queue(queue)
+      @q = @ch.queue(queue, durable: true)
       @x = @ch.default_exchange
 
       Signal.trap("TERM") do
