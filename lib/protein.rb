@@ -27,11 +27,10 @@ require "protein/transport"
 
 module Protein
 class << self
-  def configure(&block)
-    new_config = Config.new
-    block.call(new_config)
-    @config = new_config
-    @config
+  def configure
+    @config = Config.new.tap do |new_config|
+      yield new_config
+    end
   end
 
   def config
@@ -39,11 +38,9 @@ class << self
   end
 
   def logger
-    @logger ||= begin
-      Logger.new($stdout).tap do |log|
-        log.progname = 'protein'
-        log.level = config.log_level || :info
-      end
+    @logger ||= Logger.new($stdout).tap do |log|
+      log.progname = "protein"
+      log.level = config.log_level || :info
     end
   end
 end
