@@ -32,6 +32,10 @@ class AMQPAdapter
       instance_variable_defined?("@timeout") ? @timeout : 15_000
     end
 
+    def queue_durable?
+      !!@queue_durable
+    end
+
     def init
       @connection_mutex = Mutex.new
     end
@@ -79,7 +83,7 @@ class AMQPAdapter
 
       @x.publish message_payload,
         routing_key: @server_queue,
-        persistent: true
+        persistent: queue_durable?
     end
 
     def serve(router)
@@ -97,7 +101,13 @@ class AMQPAdapter
 
       @ch = @conn.create_channel
       @ch.prefetch(1)
-      @q = @ch.queue(queue, durable: true)
+      begin
+        @q = @ch.queue(queue, durable: true)
+        @queue_durable = true
+      rescue Bunny::PreconditionFailed
+        @q = @ch.queue(queue, durable: false)
+        @queue_durable = false
+      end
       @x = @ch.default_exchange
 
       Signal.trap("TERM") do
