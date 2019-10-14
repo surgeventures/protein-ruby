@@ -126,7 +126,9 @@ class AMQPAdapter
         end
       end
 
-      Protein.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
+      Protein.logger.info \
+        "Connected to #{url}, serving RPC calls from #{queue} " \
+        "(#{@queue_durable ? "durable" : "non-durable"})"
 
       loop do
         begin
