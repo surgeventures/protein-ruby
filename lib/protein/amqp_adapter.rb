@@ -32,10 +32,6 @@ class AMQPAdapter
       instance_variable_defined?("@timeout") ? @timeout : 15_000
     end
 
-    def queue_durable?
-      !!@queue_durable
-    end
-
     def init
       @connection_mutex = Mutex.new
     end
@@ -83,7 +79,7 @@ class AMQPAdapter
 
       @x.publish message_payload,
         routing_key: @server_queue,
-        persistent: queue_durable?
+        persistent: true
     end
 
     def serve(router)
@@ -103,10 +99,10 @@ class AMQPAdapter
       @ch.prefetch(1)
       begin
         @q = @ch.queue(queue, durable: true)
-        @queue_durable = true
+        Protein.logger.info "Declared queue #{queue} as durable"
       rescue Bunny::PreconditionFailed
         @q = @ch.queue(queue, durable: false)
-        @queue_durable = false
+        Protein.logger.info "Declared queue #{queue} as non-durable"
       end
       @x = @ch.default_exchange
 
@@ -126,9 +122,7 @@ class AMQPAdapter
         end
       end
 
-      Protein.logger.info \
-        "Connected to #{url}, serving RPC calls from #{queue} " \
-        "(#{@queue_durable ? "durable" : "non-durable"})"
+      Protein.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
 
       loop do
         begin
