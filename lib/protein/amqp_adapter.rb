@@ -100,9 +100,13 @@ class AMQPAdapter
       begin
         @q = @ch.queue(queue, durable: true)
         Protein.logger.info "Declared queue #{queue} as durable"
-      rescue Bunny::PreconditionFailed
+      rescue Bunny::PreconditionFailed => e
+        Protein.logger.debug(e.inspect)
+
+        @ch = @conn.create_channel
+        @ch.prefetch(1)
         @q = @ch.queue(queue, durable: false)
-        Protein.logger.info "Declared queue #{queue} as non-durable"
+        Protein.logger.info "Declared queue #{queue} as non-durable (fallback-mode)"
       end
       @x = @ch.default_exchange
 
