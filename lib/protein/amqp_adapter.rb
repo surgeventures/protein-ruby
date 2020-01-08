@@ -12,7 +12,7 @@ class AMQPAdapter
         queue(new_queue)
       end
 
-      if hash.has_key?(:timeout)
+      if hash.key?(:timeout)
         timeout(hash[:timeout])
       end
     end
@@ -28,7 +28,7 @@ class AMQPAdapter
     end
 
     def timeout(timeout = :not_set)
-      @timeout = timeout if timeout != :not_set
+      @timeout = timeout unless timeout == :not_set
       instance_variable_defined?("@timeout") ? @timeout : 15_000
     end
 
@@ -44,28 +44,31 @@ class AMQPAdapter
 
       call_id = SecureRandom.uuid
 
-      @x.publish(request_payload,
+      @x.publish request_payload,
         correlation_id: call_id,
         routing_key: @server_queue,
         reply_to: @reply_queue.name,
-        expiration: timeout)
+        expiration: timeout
 
-      call = Concurrent::Hash.new
       mutex = Mutex.new
       condition = ConditionVariable.new
+      call = Concurrent::Hash.new
       call[:mutex] = mutex
       call[:condition] = condition
       calls[call_id] = call
 
-      mutex.synchronize { condition.wait(mutex, timeout && timeout * 0.001) }
+      mutex.synchronize do
+        condition.wait(mutex, timeout && timeout * 0.001)
+      end
 
       response = call[:response]
       calls.delete(call_id)
 
-      if response == nil
-        raise(TransportError, "timeout after #{timeout}ms")
-      elsif response == "ESRV"
-        raise(TransportError, "failed to process the request")
+      case response
+      when nil
+        raise TransportError, "timeout after #{timeout}ms"
+      when "ESRV"
+        raise TransportError, "failed to process the request"
       else
         response
       end
@@ -74,14 +77,16 @@ class AMQPAdapter
     def push(message_payload)
       prepare_client
 
-      @x.publish(message_payload,
-        routing_key: @server_queue)
+      @x.publish message_payload,
+        routing_key: @server_queue,
+        persistent: true
     end
 
     def serve(router)
-      @conn = Bunny.new(url)
       @terminating = false
       @processing = false
+
+      @conn = Bunny.new(url)
       begin
         @conn.start
       rescue Bunny::TCPConnectionFailed => e
@@ -89,9 +94,20 @@ class AMQPAdapter
         log_error(e)
         raise(e)
       end
+
       @ch = @conn.create_channel
       @ch.prefetch(1)
-      @q = @ch.queue(queue)
+      begin
+        @q = @ch.queue(queue, durable: true)
+        Protein.logger.info "Declared queue #{queue} as durable"
+      rescue Bunny::PreconditionFailed => e
+        Protein.logger.debug(e.inspect)
+
+        @ch = @conn.create_channel
+        @ch.prefetch(1)
+        @q = @ch.queue(queue, durable: false)
+        Protein.logger.info "Declared queue #{queue} as non-durable (fallback-mode)"
+      end
       @x = @ch.default_exchange
 
       Signal.trap("TERM") do
@@ -116,6 +132,7 @@ class AMQPAdapter
         begin
           @q.subscribe(block: true, manual_ack: true) do |delivery_info, properties, payload|
             @processing = true
+
             begin
               @error = nil
               response = Processor.call(router, payload)
@@ -125,14 +142,16 @@ class AMQPAdapter
             end
 
             if response
-              @x.publish(response,
+              @x.publish response,
                 routing_key: properties.reply_to,
-                correlation_id: properties.correlation_id)
+                correlation_id: properties.correlation_id
             end
 
             @ch.ack(delivery_info.delivery_tag)
             @processing = false
+
             break if @terminating
+
             if @error
               log_error(@error)
               raise(@error)
@@ -140,7 +159,9 @@ class AMQPAdapter
           end
         rescue StandardError => e
           @processing = false
+
           break if @terminating
+
           log_error(e)
           Protein.logger.error "RPC server error: #{e.inspect}, restarting the server in 5s..."
 
@@ -173,7 +194,7 @@ class AMQPAdapter
 
       return if state == :running
 
-      @reply_queue.subscribe do |delivery_info, properties, payload|
+      @reply_queue.subscribe do |_delivery_info, properties, payload|
         call_id = properties[:correlation_id]
         call = calls[call_id]
 

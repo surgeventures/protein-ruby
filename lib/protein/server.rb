@@ -40,12 +40,12 @@ class Server
         end
       end
 
-      Signal.trap('TERM') do
+      Signal.trap("TERM") do
         pids.each { |pid| Process.kill(:TERM, pid) }
         pids.each { |pid| Process.wait(pid) }
       end
 
-      Signal.trap('INT') do
+      Signal.trap("INT") do
         pids.each { |pid| Process.kill(:INT, pid) }
         pids.each { |pid| Process.wait(pid) }
       end

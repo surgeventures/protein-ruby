@@ -29,11 +29,12 @@ class Pointer
     end
 
     access_path = input.scan(/(\.(\w+))|(\[(\d+)\])|(\[['"](\w+)['"]\])/).map do |match|
-      if (key = match[1])
+      case
+      when (key = match[1])
         [:struct, key]
-      elsif (key = match[3])
+      when (key = match[3])
         [:repeated, key.to_i]
-      elsif (key = match[5])
+      when (key = match[5])
         [:map, key]
       end
     end

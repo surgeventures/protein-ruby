@@ -2,14 +2,15 @@ module Protein
 class Router
   class << self
     def define(router)
-      if router.is_a?(Class) || router.is_a?(String)
+      case router
+      when Hash
+        Class.new(Router).tap do |klass|
+          klass.from_hash(router)
+        end
+      when Class, String
         router
-      elsif router.is_a?(Hash)
-        router_class = Class.new(Router)
-        router_class.from_hash(router)
-        router_class
       else
-        raise(DefinitionError, "invalid router definition")
+        raise DefinitionError, "invalid router definition"
       end
     end
 
