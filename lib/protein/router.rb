@@ -15,7 +15,6 @@ class Router
     end
 
     def config(config = nil)
-      puts "adding #{config} to config of #{self}"
       @config = (@config || {}).merge(config) if config
       @config || {}
     end
