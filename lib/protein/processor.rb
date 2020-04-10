@@ -2,14 +2,26 @@ module Protein
 class Processor
   class << self
     def call(router, request_payload)
-      service_name, request_buf = Payload::Request.decode(request_payload)
-      service_class = router.resolve_by_name(service_name)
-
-      if service_class.response?
-        process_and_log_call(service_name, service_class, request_buf)
-      else
-        process_and_log_push(service_name, service_class, request_buf)
+      around_processing = router.config.fetch(:around_processing) do
+        -> (&block) do
+          block.call
+        end
       end
+
+      response = nil
+
+      around_processing.call(-> do
+        service_name, request_buf = Payload::Request.decode(request_payload)
+        service_class = router.resolve_by_name(service_name)
+
+        response = if service_class.response?
+          process_and_log_call(service_name, service_class, request_buf)
+        else
+          process_and_log_push(service_name, service_class, request_buf)
+        end
+      end)
+
+      response
     end
 
     private

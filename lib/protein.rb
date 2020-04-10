@@ -3,6 +3,8 @@ begin
 rescue LoadError
 end
 
+require "logger"
+
 require "concurrent"
 require "google/protobuf"
 
