@@ -26,7 +26,9 @@ module RPC
   end
 
   class Router < Protein::Router
-    config(around_processing: ->(block) { block.call })
+    config(around_processing: ->(block, name, klass) do
+      block.call
+    end)
 
     service "RPC::TestService"
   end
