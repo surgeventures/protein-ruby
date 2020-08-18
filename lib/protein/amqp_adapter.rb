@@ -1,6 +1,18 @@
+require "drb/drb"
 require "securerandom"
 
 module Protein
+class AMQPHealthCheck
+  def initialize(connection, channel)
+    @connection = connection
+    @channel = channel
+  end
+
+  def healthy?
+    @connection.open? && @channel.open? && @channel.any_consumers?
+  end
+end
+
 class AMQPAdapter
   class << self
     def from_hash(hash)
@@ -82,9 +94,10 @@ class AMQPAdapter
         persistent: true
     end
 
-    def serve(router)
+    def serve(router, opts = {})
       @terminating = false
       @processing = false
+      health_check_port = opts[:health_check_port]
 
       @conn = Bunny.new(url)
       begin
@@ -125,6 +138,15 @@ class AMQPAdapter
           exit
         end
       end
+
+      if health_check_port
+        DRb.start_service(
+          "druby://localhost:#{health_check_port}",
+          ::Protein::AMQPHealthCheck.new(@conn, @ch)
+        )
+        Protein.logger.info "AMQPHealthCheck DRuby service listening on port #{health_check_port}"
+      end
+
 
       Protein.logger.info "Connected to #{url}, serving RPC calls from #{queue}"
 
