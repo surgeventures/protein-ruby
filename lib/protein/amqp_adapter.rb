@@ -15,6 +15,10 @@ class AMQPAdapter
       if hash.key?(:timeout)
         timeout(hash[:timeout])
       end
+
+      if hash.key?(:heartbeat)
+        heartbeat(hash[:heartbeat])
+      end
     end
 
     def url(url = nil)
@@ -30,6 +34,10 @@ class AMQPAdapter
     def timeout(timeout = :not_set)
       @timeout = timeout unless timeout == :not_set
       instance_variable_defined?("@timeout") ? @timeout : 15_000
+    end
+
+    def heartbeat(heartbeat = 10)
+      @heartbeat ||= heartbeat
     end
 
     def init
@@ -86,7 +94,7 @@ class AMQPAdapter
       @terminating = false
       @processing = false
 
-      @conn = Bunny.new(url)
+      @conn = Bunny.new(url, heartbeat: heartbeat)
       begin
         @conn.start
       rescue Bunny::TCPConnectionFailed => e
@@ -181,7 +189,7 @@ class AMQPAdapter
       state = @connection_mutex.synchronize do
         next :running if defined?(@conn)
 
-        @conn = Bunny.new(url)
+        @conn = Bunny.new(url, heartbeat: heartbeat)
         @conn.start
         @ch = @conn.create_channel
         @x = @ch.default_exchange
